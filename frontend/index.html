@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8' />
+  <title>My test webpage</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class='bg-slate-50 min-h-screen text-slate-800'>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000/api/v1/runs";
+  </script>
+
+  <main class="max-w-3xl mx-auto px-6 py-10">
+
+    <header class="mb-8">
+      <h1 class="text-2xl font-semibold text-slate-900">Test Run Hub</h1>
+      <p class="text-slate-500 text-sm mt-1">
+        Automated test runs
+      </p>
+    </header>
+
+    <section class="bg-white border border-slate-200 rounded-lg p-6 mb-8">
+
+      <h2 class="text-sm font-medium text-slate-600 mb-4">New run</h2>
+
+      <form id="run-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Title</label>
+          <input
+            type="text" name="title" required minlength="4" maxlength="100"
+            placeholder="Login smoke test"
+            class="w-full border border-slate-300 rounded px-3 py-2 text-sm"/>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Suite name</label>
+          <input
+            type="text" name="suite_name" required minlength="4" maxlength="50"
+            placeholder="auth-suite"
+            class="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Status</label>
+          <select name="status" required class="w-full border border-slate-300 rounded px-3 py-2 text-sm">
+            <option value="">Select status</option>
+            <option value="PASSED">PASSED</option>
+            <option value="FAILED">FAILED</option>
+            <option value="SKIPPED">SKIPPED</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Duration (sec)</label>
+          <input
+            type="number" name="duration_seconds" required min="0.01" max="3600" step="0.01"
+            placeholder="12"
+            class="w-full border border-slate-300 rounded px-3 py-2 text-sm"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="sm:col-span-2 bg-slate-900 text-white text-sm rounded py-2 hover:bg-slate-700 transition-colors"
+        >
+          Add run
+        </button>
+      </form>
+      <p id="form-error" class="text-red-600 text-sm mt-3 hidden"></p>
+    </section>
+
+    <section>
+      <h2 class="text-sm font-medium text-slate-600 mb-4">Run history</h2>
+      <div id="runs-list" class="space-y-2">
+        <!-- Run cards will appear here automatically -->
+      </div>
+    </section>
+
+  </main>
+  <script>
+    const form = document.getElementById("run-form");
+    const runsList = document.getElementById("runs-list");
+    const formError = document.getElementById("form-error");
+
+    // Status color — just for visual clarity
+    function statusColor(status) {
+      if (status === "PASSED") return "bg-green-100 text-green-700";
+      if (status === "FAILED") return "bg-red-100 text-red-700";
+      return "bg-amber-100 text-amber-700"; // SKIPPED
+    }
+
+    // Draws a single run card and inserts it into the HTML
+    function renderRun(run) {
+      const card = document.createElement("div");
+      card.className =
+        "bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between";
+
+      const date = new Date(run.created_at).toLocaleString();
+
+      card.innerHTML = `
+        <div>
+          <p class="text-sm font-medium text-slate-900">${run.title}</p>
+          <p class="text-xs text-slate-500">${run.suite_name} · ${run.duration_seconds}s · ${date}</p>
+        </div>
+        <span class="text-xs font-medium px-2 py-1 rounded ${statusColor(run.status)}">
+          ${run.status}
+        </span>
+      `;
+
+      runsList.appendChild(card);
+    }
+
+    // 1. Load all runs from the server (GET request)
+    async function loadRuns() {
+      runsList.innerHTML = ""; // clear the list before redrawing
+
+      try {
+        const response = await fetch(API_URL);
+        const runs = await response.json();
+        runs.forEach(renderRun);
+      } catch (err) {
+        runsList.innerHTML =
+          `<p class="text-sm text-red-600">Failed to load data. Is the server running?</p>`;
+      }
+    }
+
+    // 2. Send a new run to the server (POST request)
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault(); // prevent the page from reloading
+      formError.classList.add("hidden");
+
+      // Collect form data into a plain JS object
+      const formData = new FormData(form);
+      const payload = {
+        title: formData.get("title"),
+        suite_name: formData.get("suite_name"),
+        status: formData.get("status"),
+        duration_seconds: parseFloat(formData.get("duration_seconds")),
+      };
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          throw new Error("Server rejected the data");
+        }
+
+        form.reset();      // clear the form
+        await loadRuns();  // reload the list to see the new run
+
+      } catch (err) {
+        formError.textContent = "Error: please check the values you entered.";
+        formError.classList.remove("hidden");
+      }
+    });
+
+    // 3. Load runs as soon as the page opens
+    loadRuns();
+  </script>
+
+</body>
+</html>
