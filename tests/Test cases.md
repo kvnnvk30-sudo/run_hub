@@ -1,86 +1,86 @@
-# Test Run Hub — Тест-кейсы
+# Test Run Hub — Test Cases
 
-## API тест-кейсы (`/api/v1/runs`)
+## API Test Cases (`/api/v1/runs`)
 
 ### GET /api/v1/runs
 
-| ID | Название | Предусловия | Шаги | Ожидаемый результат |
-|----|----------|-------------|------|----------------------|
-| API-01 | Получить пустой список | В БД нет записей | GET `/api/v1/runs` | 200 OK, тело `[]` |
-| API-02 | Получить список прогонов | В БД есть 2+ записи | GET `/api/v1/runs` | 200 OK, массив объектов с полями `id, title, suite_name, status, duration_seconds, created_at` |
-| API-03 | Сортировка по дате | В БД есть записи с разным `created_at` | GET `/api/v1/runs` | Записи отсортированы по `created_at` по убыванию (новые первыми) |
+| ID | Name | Preconditions | Steps | Expected Result |
+|----|------|----------------|-------|-------------------|
+| API-01 | Get an empty list | No records in DB | GET `/api/v1/runs` | 200 OK, body `[]` |
+| API-02 | Get a list of runs | 2+ records exist in DB | GET `/api/v1/runs` | 200 OK, array of objects with fields `id, title, suite_name, status, duration_seconds, created_at` |
+| API-03 | Sort by date | Records with different `created_at` exist | GET `/api/v1/runs` | Records sorted by `created_at` descending (newest first) |
 
 ### GET /api/v1/runs/{run_id}
 
-| ID | Название | Предусловия | Шаги | Ожидаемый результат |
-|----|----------|-------------|------|----------------------|
-| API-04 | Получить существующий прогон | Прогон с id=1 существует | GET `/api/v1/runs/1` | 200 OK, объект с корректными данными |
-| API-05 | Получить несуществующий прогон | Прогона с id=9999 нет | GET `/api/v1/runs/9999` | 404 Not Found, `{"detail": "Test run not found"}` |
-| API-06 | Некорректный id (не число) | — | GET `/api/v1/runs/abc` | 422 Unprocessable Content |
+| ID | Name | Preconditions | Steps | Expected Result |
+|----|------|----------------|-------|-------------------|
+| API-04 | Retrieve an existing run | Run with id=1 exists | GET `/api/v1/runs/1` | 200 OK, object with correct data |
+| API-05 | Retrieve a non-existent run | No run with id=9999 | GET `/api/v1/runs/9999` | 404 Not Found, `{"detail": "Test run not found"}` |
+| API-06 | Invalid id (not a number) | — | GET `/api/v1/runs/abc` | 422 Unprocessable Content |
 
 ### POST /api/v1/runs
 
-| ID | Название | Входные данные | Ожидаемый результат |
-|----|----------|-----------------|----------------------|
-| API-07 | Успешное создание прогона | `{title: "Login test", suite_name: "auth-suite", status: "PASSED", duration_seconds: 12.5}` | 201 Created, тело содержит созданный объект с `id` и `created_at` |
-| API-08 | Отсутствует обязательное поле `title` | `{suite_name: "auth-suite", status: "PASSED", duration_seconds: 12.5}` | 422 Unprocessable Content |
-| API-09 | Отсутствует обязательное поле `suite_name` | `{title: "Login test", status: "PASSED", duration_seconds: 12.5}` | 422 Unprocessable Content |
-| API-10 | `title` короче минимальной длины (< 4 символов) | `{title: "ab", ...}` | 422 Unprocessable Content |
-| API-11 | `title` длиннее максимальной длины (> 100 символов) | `{title: "a"*101, ...}` | 422 Unprocessable Content |
-| API-12 | `suite_name` короче минимальной длины (< 4 символов) | `{suite_name: "ab", ...}` | 422 Unprocessable Content |
-| API-13 | Недопустимое значение `status` | `{status: "passed", ...}` (нижний регистр) | 422 Unprocessable Content |
-| API-14 | Недопустимое значение `status` (произвольная строка) | `{status: "DONE", ...}` | 422 Unprocessable Content |
-| API-15 | `duration_seconds` = 0 | `{duration_seconds: 0, ...}` | 422 Unprocessable Content (требуется `> 0`) |
-| API-16 | `duration_seconds` отрицательное | `{duration_seconds: -5, ...}` | 422 Unprocessable Content |
-| API-17 | `duration_seconds` как строка | `{duration_seconds: "twelve", ...}` | 422 Unprocessable Content |
-| API-18 | Пустое тело запроса | `{}` | 422 Unprocessable Content |
-| API-19 | Лишние/неизвестные поля в теле | `{title: "...", suite_name: "...", status: "PASSED", duration_seconds: 5, extra_field: "x"}` | 201 Created, лишнее поле игнорируется (проверить поведение — по умолчанию Pydantic его отбрасывает) |
-| API-20 | Проверка типа `created_at` в ответе | Валидный запрос | 201 Created, `created_at` — валидная ISO-дата |
+| ID | Name | Input Data | Expected Result |
+|----|------|-------------|-------------------|
+| API-07 | Successful run creation | `{title: "Login test", suite_name: "auth-suite", status: "PASSED", duration_seconds: 12.5}` | 201 Created, body contains the created object with `id` and `created_at` |
+| API-08 | Missing required field `title` | `{suite_name: "auth-suite", status: "PASSED", duration_seconds: 12.5}` | 422 Unprocessable Content |
+| API-09 | Missing required field `suite_name` | `{title: "Login test", status: "PASSED", duration_seconds: 12.5}` | 422 Unprocessable Content |
+| API-10 | `title` shorter than minimum length (< 4 chars) | `{title: "ab", ...}` | 422 Unprocessable Content |
+| API-11 | `title` longer than maximum length (> 100 chars) | `{title: "a"*101, ...}` | 422 Unprocessable Content |
+| API-12 | `suite_name` shorter than minimum length (< 4 chars) | `{suite_name: "ab", ...}` | 422 Unprocessable Content |
+| API-13 | Invalid `status` value | `{status: "passed", ...}` (lowercase) | 422 Unprocessable Content |
+| API-14 | Invalid `status` value (arbitrary string) | `{status: "DONE", ...}` | 422 Unprocessable Content |
+| API-15 | `duration_seconds` = 0 | `{duration_seconds: 0, ...}` | 422 Unprocessable Content (must be `> 0`) |
+| API-16 | `duration_seconds` negative | `{duration_seconds: -5, ...}` | 422 Unprocessable Content |
+| API-17 | `duration_seconds` as a string | `{duration_seconds: "twelve", ...}` | 422 Unprocessable Content |
+| API-18 | Empty request body | `{}` | 422 Unprocessable Content |
+| API-19 | Extra/unknown fields in body | `{title: "...", suite_name: "...", status: "PASSED", duration_seconds: 5, extra_field: "x"}` | 201 Created, extra field is ignored (verify behavior — Pydantic drops it by default) |
+| API-20 | Verify `created_at` type in response | Valid request | 201 Created, `created_at` is a valid ISO date |
 
 ### CORS
 
-| ID | Название | Шаги | Ожидаемый результат |
-|----|----------|------|----------------------|
-| API-21 | Preflight-запрос с фронтенда | OPTIONS `/api/v1/runs` с Origin фронтенда | 200 OK, заголовок `Access-Control-Allow-Origin` присутствует |
-| API-22 | POST с другого origin | POST с Origin, отличным от бэкенда | Запрос проходит (allow_origins=["*"]) |
+| ID | Name | Steps | Expected Result |
+|----|------|-------|-------------------|
+| API-21 | Preflight request from the frontend | OPTIONS `/api/v1/runs` with frontend Origin | 200 OK, `Access-Control-Allow-Origin` header present |
+| API-22 | POST from a different origin | POST with an Origin different from the backend | Request succeeds (allow_origins=["*"]) |
 
 ---
 
-## UI тест-кейсы (`index.html`)
+## UI Test Cases (`index.html`)
 
-### Форма "New run"
+### "New run" Form
 
-| ID | Название | Шаги | Ожидаемый результат |
-|----|----------|------|----------------------|
-| UI-01 | Успешное добавление прогона | Заполнить все поля валидными значениями → нажать "Add run" | Форма очищается, новая карточка появляется в "Run history" |
-| UI-02 | Отправка формы с пустым полем "Title" | Оставить "Title" пустым → нажать "Add run" | Браузер блокирует отправку (атрибут `required`), показывается стандартная подсказка |
-| UI-03 | "Title" короче 4 символов | Ввести "ab" в Title → отправить | Браузер блокирует отправку (`minlength="4"`) |
-| UI-04 | "Suite name" пустое | Оставить "Suite name" пустым → отправить | Браузер блокирует отправку (`required`) |
-| UI-05 | Статус не выбран | Оставить select "Status" на пустом значении → отправить | Браузер блокирует отправку (`required`) |
-| UI-06 | Длительность не указана | Оставить поле "Duration" пустым → отправить | Браузер блокирует отправку (`required`) |
-| UI-07 | Длительность = 0 или отрицательная | Ввести `0` или `-5` в Duration → отправить | Браузер блокирует (`min="0.01"`), либо сервер вернёт ошибку и на экране появится "Error: please check the values you entered." |
-| UI-08 | Сервер вернул ошибку (невалидные данные дошли до бэкенда) | Отправить данные, которые бэкенд отклонит | Показывается блок `#form-error` с текстом "Error: please check the values you entered." |
-| UI-09 | Сервер недоступен при отправке | Остановить бэкенд → отправить форму | Показывается `#form-error`, форма не очищается |
-| UI-10 | Форма очищается после успешной отправки | Успешно отправить прогон | Все поля формы возвращаются к пустым/дефолтным значениям |
+| ID | Name | Steps | Expected Result |
+|----|------|-------|-------------------|
+| UI-01 | Successfully add a run | Fill in all fields with valid values → click "Add run" | Form clears, a new card appears in "Run history" |
+| UI-02 | Submit form with empty "Title" field | Leave "Title" empty → click "Add run" | Browser blocks submission (`required` attribute), default browser hint shown |
+| UI-03 | "Title" shorter than 4 characters | Enter "ab" in Title → submit | Browser blocks submission (`minlength="4"`) |
+| UI-04 | "Suite name" empty | Leave "Suite name" empty → submit | Browser blocks submission (`required`) |
+| UI-05 | Status not selected | Leave "Status" select at empty value → submit | Browser blocks submission (`required`) |
+| UI-06 | Duration not specified | Leave "Duration" field empty → submit | Browser blocks submission (`required`) |
+| UI-07 | Duration = 0 or negative | Enter `0` or `-5` in Duration → submit | Browser blocks it (`min="0.01"`), or the server returns an error and "Error: please check the values you entered." is displayed |
+| UI-08 | Server returned an error (invalid data reached the backend) | Submit data that the backend will reject | The `#form-error` block is shown with the text "Error: please check the values you entered." |
+| UI-09 | Server unavailable on submit | Stop the backend → submit the form | `#form-error` is shown, the form is not cleared |
+| UI-10 | Form clears after a successful submission | Successfully submit a run | All form fields return to their empty/default values |
 
-### Список "Run history"
+### "Run History" List
 
-| ID | Название | Шаги | Ожидаемый результат |
-|----|----------|------|----------------------|
-| UI-11 | Загрузка списка при открытии страницы | Открыть `index.html` | Список автоматически загружается и отображается без действий пользователя |
-| UI-12 | Пустой список прогонов | В БД нет записей → открыть страницу | Раздел "Run history" пустой, без ошибок |
-| UI-13 | Сервер недоступен при загрузке | Остановить бэкенд → открыть/обновить страницу | Показывается сообщение "Failed to load data. Is the server running?" |
-| UI-14 | Отображение статуса PASSED | В списке есть прогон со статусом PASSED | Бейдж статуса зелёного цвета, текст "PASSED" |
-| UI-15 | Отображение статуса FAILED | В списке есть прогон со статусом FAILED | Бейдж статуса красного цвета, текст "FAILED" |
-| UI-16 | Отображение статуса SKIPPED | В списке есть прогон со статусом SKIPPED | Бейдж статуса жёлтого/янтарного цвета, текст "SKIPPED" |
-| UI-17 | Корректность отображаемых данных | Добавить прогон с конкретными title/suite/duration | Карточка показывает именно эти title, suite_name, duration_seconds и дату создания |
-| UI-18 | Список обновляется после добавления | Добавить новый прогон | Новая карточка появляется в списке без ручного обновления страницы |
-| UI-19 | Формат даты | Прогон с известным `created_at` | Дата отображается в читаемом локальном формате (не сырой ISO-строкой) |
-| UI-20 | Несколько прогонов подряд | Добавить 3+ прогона | Все карточки отображаются, порядок соответствует сортировке с бэкенда (новые сверху) |
+| ID | Name | Steps | Expected Result |
+|----|------|-------|-------------------|
+| UI-11 | List loads when the page opens | Open `index.html` | The list loads and displays automatically without any user action |
+| UI-12 | Empty list of runs | No records in DB → open the page | "Run history" section is empty, no errors |
+| UI-13 | Server unavailable on load | Stop the backend → open/refresh the page | Message "Failed to load data. Is the server running?" is shown |
+| UI-14 | PASSED status display | A run with status PASSED is in the list | Status badge is green, text "PASSED" |
+| UI-15 | FAILED status display | A run with status FAILED is in the list | Status badge is red, text "FAILED" |
+| UI-16 | SKIPPED status display | A run with status SKIPPED is in the list | Status badge is yellow/amber, text "SKIPPED" |
+| UI-17 | Correctness of displayed data | Add a run with specific title/suite/duration | The card shows exactly this title, suite_name, duration_seconds, and creation date |
+| UI-18 | List updates after adding | Add a new run | New card appears in the list without a manual page refresh |
+| UI-19 | Date format | A run with a known `created_at` | Date is displayed in a readable local format (not a raw ISO string) |
+| UI-20 | Several runs in a row | Add 3+ runs | All cards are displayed, order matches backend sorting (newest on top) |
 
-### Кросс-браузерные / общие проверки
+### Cross-Browser / General Checks
 
-| ID | Название | Шаги | Ожидаемый результат |
-|----|----------|------|----------------------|
-| UI-21 | Открытие через `file://` | Открыть `index.html` напрямую двойным кликом | Запрос к API блокируется CORS/протоколом — задокументировать как известное ограничение |
-| UI-22 | Адаптивность формы | Уменьшить ширину окна браузера | Поля формы переходят в одну колонку (`sm:grid-cols-2` → 1 колонка) 
+| ID | Name | Steps | Expected Result |
+|----|------|-------|-------------------|
+| UI-21 | Open via `file://` | Open `index.html` directly by double-clicking | Request to the API is blocked by CORS/protocol — document as a known limitation |
+| UI-22 | Form responsiveness | Shrink the browser window width | Form fields switch to a single column (`sm:grid-cols-2` → 1 column) |
